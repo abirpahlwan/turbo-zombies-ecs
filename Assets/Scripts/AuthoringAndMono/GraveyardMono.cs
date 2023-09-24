@@ -8,6 +8,7 @@ public class GraveyardMono : MonoBehaviour
     public float2 FieldDimensions;
     public int NumberOfTombstones;
     public GameObject TombstonePrefab;
+    
     public uint RandomSeed;
 }
 
