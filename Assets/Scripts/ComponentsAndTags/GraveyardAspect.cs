@@ -1,4 +1,5 @@
-﻿using Unity.Entities;
+﻿using Unity.Collections;
+using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
@@ -8,12 +9,32 @@ public readonly partial struct GraveyardAspect : IAspect
 {
     public readonly Entity Entity;
 
+    // Graveyard
     private readonly RefRO<LocalTransform> transformAspect;
     private readonly RefRO<GraveyardProperties> graveyardProperties;
     private readonly RefRW<GraveyardRandom> graveyardRandom;
-
+    // Tombstones
     public int NumberOfTombstonesToSpawn => graveyardProperties.ValueRO.NumberOfTombstones;
     public Entity TombstonePrefab => graveyardProperties.ValueRO.TombstonePrefab;
+    
+    // Zombies
+    private readonly RefRW<ZombieSpawnPoints> zombieSpawnPoints;
+    private readonly RefRW<ZombieSpawnTimer> zombieSpawnTimer;
+    private int ZombieSpawnPointCount => zombieSpawnPoints.ValueRO.PointsBlobReference.Value.BlobPointsArray.Length;
+
+    public float ZombieSpawnTimer
+    {
+        get => zombieSpawnTimer.ValueRO.Value;
+        set => zombieSpawnTimer.ValueRW.Value = value;
+    }
+    
+    public bool TimeToSpawnZombie => ZombieSpawnTimer <= 0f;
+    public float ZombieSpawnRate => graveyardProperties.ValueRO.ZombieSpawnRate;
+    
+    public bool ZombieSpawnPointInitialized()
+    {
+        return zombieSpawnPoints.ValueRO.PointsBlobReference.IsCreated && ZombieSpawnPointCount > 0;
+    }
 
     public LocalTransform GetRandomTombstoneTransform()
     {
@@ -58,5 +79,4 @@ public readonly partial struct GraveyardAspect : IAspect
     }
 
     private float GetRandomScale(float min) => graveyardRandom.ValueRW.Value.NextFloat(min, 1f);
-    
 }
