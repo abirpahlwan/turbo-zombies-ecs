@@ -36,6 +36,7 @@ public partial struct SpawnZombieJob : IJobEntity
     public float DeltaTime;
     public EntityCommandBuffer ecb;
     
+    [BurstCompile]
     private void Execute(GraveyardAspect graveyard)
     {
         graveyard.ZombieSpawnTimer -= DeltaTime;
