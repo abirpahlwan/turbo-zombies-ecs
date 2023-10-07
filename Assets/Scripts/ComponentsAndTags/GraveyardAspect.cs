@@ -13,6 +13,7 @@ public readonly partial struct GraveyardAspect : IAspect
     private readonly RefRO<LocalTransform> transformAspect;
     private readonly RefRO<GraveyardProperties> graveyardProperties;
     private readonly RefRW<GraveyardRandom> graveyardRandom;
+    
     // Tombstones
     public int NumberOfTombstonesToSpawn => graveyardProperties.ValueRO.NumberOfTombstones;
     public Entity TombstonePrefab => graveyardProperties.ValueRO.TombstonePrefab;
@@ -20,7 +21,6 @@ public readonly partial struct GraveyardAspect : IAspect
     // Zombies
     private readonly RefRW<ZombieSpawnPoints> zombieSpawnPoints;
     private readonly RefRW<ZombieSpawnTimer> zombieSpawnTimer;
-    private int ZombieSpawnPointCount => zombieSpawnPoints.ValueRO.PointsBlobReference.Value.BlobPointsArray.Length;
 
     public float ZombieSpawnTimer
     {
@@ -29,13 +29,11 @@ public readonly partial struct GraveyardAspect : IAspect
     }
     
     public bool TimeToSpawnZombie => ZombieSpawnTimer <= 0f;
-    public float ZombieSpawnRate => graveyardProperties.ValueRO.ZombieSpawnRate;
     
-    public bool ZombieSpawnPointInitialized()
-    {
-        return zombieSpawnPoints.ValueRO.PointsBlobReference.IsCreated && ZombieSpawnPointCount > 0;
-    }
+    public float ZombieSpawnRate => graveyardProperties.ValueRO.ZombieSpawnRate;
+    public Entity ZombiePrefab => graveyardProperties.ValueRO.ZombiePrefab;
 
+    // Tombstone Functions
     public LocalTransform GetRandomTombstoneTransform()
     {
         return new LocalTransform
@@ -79,4 +77,29 @@ public readonly partial struct GraveyardAspect : IAspect
     }
 
     private float GetRandomScale(float min) => graveyardRandom.ValueRW.Value.NextFloat(min, 1f);
+    
+    // Zombie Functions
+    public LocalTransform GetZombieSpawnPoint()
+    {
+        var position = GetRandomZombieSpawnPoint();
+        return new LocalTransform
+        {
+            Position = position,
+            Rotation = quaternion.RotateY(Utils.GetHeading(position, transformAspect.ValueRO.Position)),
+            Scale = 1f
+        };
+    }
+
+    private int ZombieSpawnPointCount => zombieSpawnPoints.ValueRO.PointsBlobReference.Value.BlobPointsArray.Length;
+    // private readonly BlobArray<float3> zombieSpawnPointsArray => zombieSpawnPoints.ValueRO.PointsBlobReference.Value.BlobPointsArray;
+    
+    public bool ZombieSpawnPointInitialized()
+    {
+        return zombieSpawnPoints.ValueRO.PointsBlobReference.IsCreated && ZombieSpawnPointCount > 0;
+    }
+
+    private float3 GetRandomZombieSpawnPoint()
+    {
+        return zombieSpawnPoints.ValueRO.PointsBlobReference.Value.BlobPointsArray[graveyardRandom.ValueRW.Value.NextInt(ZombieSpawnPointCount)];
+    }
 }

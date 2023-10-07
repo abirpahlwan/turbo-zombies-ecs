@@ -7,7 +7,7 @@ public partial struct SpawnZombieSystem : ISystem
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
-        
+        state.RequireForUpdate<BeginInitializationEntityCommandBufferSystem.Singleton>();
     }
     
     [BurstCompile]
@@ -19,7 +19,14 @@ public partial struct SpawnZombieSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var deltaTime = SystemAPI.Time.DeltaTime;
+        var ecbSingleton = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>();
         
+        new SpawnZombieJob
+        {
+            DeltaTime = deltaTime,
+            ecb = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged)
+        }.Run();
     }
 }
 
@@ -33,8 +40,12 @@ public partial struct SpawnZombieJob : IJobEntity
     {
         graveyard.ZombieSpawnTimer -= DeltaTime;
         if (!graveyard.TimeToSpawnZombie) return;
+        if (!graveyard.ZombieSpawnPointInitialized()) return;
 
         graveyard.ZombieSpawnTimer = graveyard.ZombieSpawnRate;
-        
+        var newZombie = ecb.Instantiate(graveyard.ZombiePrefab);
+
+        var newZombieTransform = graveyard.GetZombieSpawnPoint();
+        ecb.SetComponent(newZombie, newZombieTransform);
     }
 }
